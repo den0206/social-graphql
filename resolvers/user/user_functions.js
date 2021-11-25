@@ -2,6 +2,7 @@ const User = require('../../database/model/user');
 const bcrypt = require('bcryptjs');
 const aws = require('../../utils/aws-upload-image');
 const jwt = require('jsonwebtoken');
+const {option} = require('commander');
 
 /// Query
 async function getUser(args) {
@@ -16,6 +17,13 @@ async function getUser(args) {
   }
 }
 
+async function users(args) {
+  const users = await User.find({
+    name: {$regex: args.query, $options: 'i'},
+  });
+  return users;
+}
+
 /// Mutations
 async function registerUser(input) {
   const newUser = input;
@@ -27,8 +35,7 @@ async function registerUser(input) {
   if (existEmail) throw new Error('Email already use');
   if (existUsername) throw new Error('Username already use');
   try {
-    const salt = bcrypt.genSaltSync(10);
-    const hashedPasword = await bcrypt.hash(newUser.password, salt);
+    const hashedPasword = await generatePassword(newUser.password);
     const user = User({...newUser, password: hashedPasword});
     user.save();
     return user;
@@ -60,6 +67,34 @@ async function loginUser(input) {
   } catch (e) {
     console.log(e);
     throw e;
+  }
+}
+
+async function updateUser(input, context) {
+  const {id} = context.user;
+  console.log(id);
+
+  try {
+    if (input.currentPassword && input.newPassword) {
+      const userFound = await User.findById(id);
+      const passwordSuccess = await bcrypt.compare(
+        input.currentPassword,
+        userFound.password
+      );
+      console.log(passwordSuccess);
+
+      if (!passwordSuccess) throw new Error('Password is Bad');
+
+      const hashedPasword = await generatePassword(input.newPassword);
+      await User.findByIdAndUpdate(id, {password: hashedPasword});
+    } else {
+      await User.findByIdAndUpdate(id, input);
+    }
+
+    return true;
+  } catch (e) {
+    console.log(e);
+    return false;
   }
 }
 
@@ -105,17 +140,11 @@ async function deleteAvatar(url, context) {
   }
 }
 
-function createToken(user, SECRET_KEY, expiresIn) {
-  const {id, name, email, username} = user;
-  const payload = {
-    id,
-    name,
-    email,
-    username,
-  };
-  const token = jwt.sign(payload, SECRET_KEY, expiresIn);
+async function generatePassword(password) {
+  const salt = bcrypt.genSaltSync(10);
+  const hashedPasword = await bcrypt.hash(password, salt);
 
-  return token;
+  return hashedPasword;
 }
 
 function getUrlExtension(url) {
@@ -128,8 +157,23 @@ function getUrlExtension(url) {
 
 module.exports = {
   getUser,
+  users,
   registerUser,
   loginUser,
   uploadAvatar,
   deleteAvatar,
+  updateUser,
 };
+
+// function createToken(user, SECRET_KEY, expiresIn) {
+//   const {id, name, email, username} = user;
+//   const payload = {
+//     id,
+//     name,
+//     email,
+//     username,
+//   };
+//   const token = jwt.sign(payload, SECRET_KEY, expiresIn);
+
+//   return token;
+// }

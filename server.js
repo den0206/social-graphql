@@ -13,8 +13,10 @@ async function startServer() {
     typeDefs,
     resolvers,
     context: async ({req}) => {
-      const user = await verifyUser(req);
-      return user;
+      if (req) {
+        const user = await verifyUser(req);
+        return user;
+      }
     },
     formatError: (e) => {
       console.log(e.message);

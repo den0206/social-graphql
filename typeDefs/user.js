@@ -4,6 +4,7 @@ module.exports = gql`
   scalar Upload
   extend type Query {
     getUser(id: ID!): User
+    users(query: String): [User]
   }
 
   extend type Mutation {
@@ -11,6 +12,7 @@ module.exports = gql`
     loginUser(input: LoginInput): Token
     uploadAvatar(file: Upload!): ReturnAvatar!
     deleteAvatar(url: String!): Boolean!
+    updateUser(input: UserUpdateInput): Boolean!
   }
 
   type Token {
@@ -41,8 +43,17 @@ module.exports = gql`
     password: String!
   }
 
+  input UserUpdateInput {
+    name: String
+    email: String
+    currentPassword: String
+    newPassword: String
+    description: String
+    siteWeb: String
+  }
+
   type User {
-    id: String!
+    id: ID!
     name: String!
     username: String!
     email: String!
