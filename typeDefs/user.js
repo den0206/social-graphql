@@ -1,6 +1,7 @@
-const {gql} = require('apollo-server');
+const {gql} = require('apollo-server-express');
 
 module.exports = gql`
+  scalar Upload
   extend type Query {
     getUser(id: ID!): User
   }
@@ -8,16 +9,24 @@ module.exports = gql`
   extend type Mutation {
     registerUser(input: RegisterInput): User
     loginUser(input: LoginInput): Token
-    uploadAvatar(file: Upload): UploadAvatar
+    uploadAvatar(file: Upload!): ReturnAvatar!
+    deleteAvatar(url: String!): Boolean!
   }
 
   type Token {
     token: String
   }
 
-  type UploadAvatar {
+  type File {
+    uri: String!
+    filename: String!
+    mimetype: String!
+    encoding: String!
+  }
+
+  type ReturnAvatar {
     status: Boolean
-    urlAvatr: String
+    url: String
   }
 
   input RegisterInput {
@@ -30,10 +39,6 @@ module.exports = gql`
   input LoginInput {
     email: String!
     password: String!
-  }
-
-  input Upload {
-    _: String
   }
 
   type User {

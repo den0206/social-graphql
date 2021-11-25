@@ -1,6 +1,6 @@
 const User = require('../../database/model/user');
 const bcrypt = require('bcryptjs');
-const awsUploadImage = require('../../utils/aws-upload-image');
+const aws = require('../../utils/aws-upload-image');
 const jwt = require('jsonwebtoken');
 
 /// Query
@@ -47,7 +47,15 @@ async function loginUser(input) {
     if (!isPasswordValid) throw new Error('password is not match');
 
     const secret = process.env.JWT_SECRET_KEY || 'mysecretkey';
-    const token = createToken(user, secret, {expiresIn: '1d'});
+    const {id, name, email, username} = user;
+    const payload = {
+      id,
+      name,
+      email,
+      username,
+    };
+
+    const token = jwt.sign(payload, secret, {expiresIn: '1d'});
     return {token};
   } catch (e) {
     console.log(e);
@@ -55,9 +63,46 @@ async function loginUser(input) {
   }
 }
 
-async function uploadAvatar(file) {
-  console.log(file);
-  return null;
+async function uploadAvatar(file, context) {
+  const {id} = context.user;
+  console.log(id);
+  const {createReadStream, mimetype} = await file;
+  const extension = mimetype.split('/')[1];
+  const imageName = `avatar/${id}.${extension}`;
+  const fileData = createReadStream();
+
+  try {
+    const result = await aws.awsUploadImage(fileData, imageName);
+    await User.findByIdAndUpdate(id, {avatar: result});
+    console.log(result);
+    return {
+      status: true,
+      url: result,
+    };
+  } catch (e) {
+    return {
+      status: false,
+      url: null,
+    };
+  }
+}
+
+async function deleteAvatar(url, context) {
+  const {id} = context.user;
+
+  const extension = getUrlExtension(url);
+  const imageName = `avatar/${id}.${extension}`;
+  console.log(imageName);
+
+  try {
+    const delRes = await aws.awsDeleteImage(imageName);
+    await User.findByIdAndUpdate(id, {avatar: ''});
+
+    return true;
+  } catch (e) {
+    console.log(e);
+    return false;
+  }
 }
 
 function createToken(user, SECRET_KEY, expiresIn) {
@@ -73,9 +118,18 @@ function createToken(user, SECRET_KEY, expiresIn) {
   return token;
 }
 
+function getUrlExtension(url) {
+  try {
+    return url.match(/^https?:\/\/.*[\\\/][^\?#]*\.([a-zA-Z0-9]+)\??#?/)[1];
+  } catch (ignored) {
+    return false;
+  }
+}
+
 module.exports = {
   getUser,
   registerUser,
   loginUser,
   uploadAvatar,
+  deleteAvatar,
 };
