@@ -5,6 +5,7 @@ module.exports = gql`
     isFollow(username: String!): Boolean
     getFollowers(username: String!): [User]
     getFolloweds(username: String!): [User]
+    getNotFolloweds: [User]
   }
   extend type Mutation {
     follow(username: String!): Boolean

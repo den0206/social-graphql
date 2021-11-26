@@ -53,6 +53,22 @@ async function getFolloweds(args) {
   return res;
 }
 
+async function getNotFolloweds(context) {
+  const users = await User.find().limit(50);
+  const array = [];
+  for await (const data of users) {
+    const isFound = Follow.findOne({userid: context.userid})
+      .where('follow')
+      .equals(data._id);
+
+    if (!isFound && data._id.toString() !== context.user.id.toString()) {
+      array.push(data);
+    }
+  }
+
+  return array;
+}
+
 /// mutation
 
 async function follow(args, context) {
@@ -88,6 +104,7 @@ module.exports = {
   isFollow,
   getFollowers,
   getFolloweds,
+  getNotFolloweds,
   follow,
   unfollow,
 };

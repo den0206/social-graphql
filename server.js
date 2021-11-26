@@ -30,9 +30,9 @@ async function startServer() {
   app.use(graphqlUploadExpress({maxFileSize: 10000000, maxFiles: 10}));
   server.applyMiddleware({app, path: '/graphql'});
 
-  const PORT = process.env.PORT || 3000;
+  const PORT = process.env.PORT || 4000;
 
-  await new Promise((r) => app.listen({port: 4000}, r));
+  await new Promise((r) => app.listen({port: PORT}, r));
 }
 
 startServer();

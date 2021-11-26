@@ -25,6 +25,7 @@ async function getImagesFolloweds(context) {
   for await (const data of followeds) {
     followesList.push(data.follow);
   }
+  console.log(followesList);
 
   const resImages = [];
 

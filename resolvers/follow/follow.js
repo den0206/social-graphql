@@ -5,6 +5,7 @@ const resolvers = {
     isFollow: (_, args, context) => functions.isFollow(args, context),
     getFollowers: (_, args, context) => functions.getFollowers(args, context),
     getFolloweds: (_, args) => functions.getFolloweds(args),
+    getNotFolloweds: (_, __, context) => functions.getNotFolloweds(context),
   },
 
   Mutation: {
