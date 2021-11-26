@@ -32,7 +32,10 @@ async function startServer() {
 
   const PORT = process.env.PORT || 4000;
 
-  await new Promise((r) => app.listen({port: PORT}, r));
+  // await new Promise((r) => app.listen({port: PORT}, r));
+  app.listen(PORT, () => {
+    console.log(`Server is listening on port ${PORT}${server.graphqlPath}`);
+  });
 }
 
 startServer();
